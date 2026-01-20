@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 
+# -----------------------------
 # Page configuration
+# -----------------------------
 st.set_page_config(
     page_title="AI Risk Mitigation Tool",
     layout="wide"
@@ -10,8 +13,9 @@ st.set_page_config(
 st.title("🌐 AI-Based Risk Mitigation Matrix")
 
 st.write(
-    "This interactive tool evaluates project risks using probability and impact, "
-    "and generates a mitigation matrix with an AI-style summary."
+    "This interactive web-based tool evaluates project risks using probability "
+    "and impact, generates a mitigation matrix, visual risk assessment graphs, "
+    "and an AI-style summary."
 )
 
 # -----------------------------
@@ -74,7 +78,7 @@ def mitigation(level):
 # -----------------------------
 # Generate Output
 # -----------------------------
-if st.button("🚀 Generate Risk Mitigation Matrix"):
+if st.button("🚀 Generate Risk Assessment"):
     df = pd.DataFrame({
         "Risk": risk_names,
         "Probability": probabilities,
@@ -85,10 +89,58 @@ if st.button("🚀 Generate Risk Mitigation Matrix"):
     df["Risk Level"] = df["Risk Score"].apply(classify_risk)
     df["Mitigation Strategy"] = df["Risk Level"].apply(mitigation)
 
+    # -----------------------------
+    # Risk Mitigation Matrix (Table)
+    # -----------------------------
     st.subheader("📊 Risk Mitigation Matrix")
     st.dataframe(df, use_container_width=True)
 
-    # AI-style summary
+    # -----------------------------
+    # Risk Score Bar Chart
+    # -----------------------------
+    st.subheader("📈 Risk Assessment – Risk Score Graph")
+
+    fig1, ax1 = plt.subplots()
+    ax1.bar(df["Risk"], df["Risk Score"])
+    ax1.set_xlabel("Risk")
+    ax1.set_ylabel("Risk Score")
+    ax1.set_title("Risk Score by Risk Type")
+    plt.xticks(rotation=20)
+
+    st.pyplot(fig1)
+
+    # -----------------------------
+    # Probability–Impact Heatmap
+    # -----------------------------
+    st.subheader("🔥 Probability–Impact Risk Heatmap")
+
+    heatmap_data = pd.DataFrame(
+        0,
+        index=range(1, 6),
+        columns=range(1, 6)
+    )
+
+    for p, i in zip(probabilities, impacts):
+        heatmap_data.loc[p, i] += 1
+
+    fig2, ax2 = plt.subplots()
+    im = ax2.imshow(heatmap_data, cmap="YlOrRd")
+
+    ax2.set_xlabel("Impact")
+    ax2.set_ylabel("Probability")
+    ax2.set_title("Risk Density Heatmap")
+
+    ax2.set_xticks(range(5))
+    ax2.set_yticks(range(5))
+    ax2.set_xticklabels(range(1, 6))
+    ax2.set_yticklabels(range(1, 6))
+
+    plt.colorbar(im, ax=ax2, label="Number of Risks")
+    st.pyplot(fig2)
+
+    # -----------------------------
+    # AI-Generated Summary
+    # -----------------------------
     high = len(df[df["Risk Level"] == "High"])
     medium = len(df[df["Risk Level"] == "Medium"])
     low = len(df[df["Risk Level"] == "Low"])
